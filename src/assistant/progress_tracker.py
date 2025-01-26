@@ -1,5 +1,7 @@
+from typing import Optional
 import sqlite3
 import json
+from .state import SummaryState
 
 class ProgressTracker:
     def __init__(self):
@@ -52,4 +54,15 @@ class ProgressTracker:
         Recommendations:
         {state.recommendations}
         """
-        return report 
+        return report
+
+    def load_progress(self, student_id: str) -> Optional[SummaryState]:
+        raw = self.conn.execute(
+            'SELECT progress_data FROM students WHERE id = ?',
+            (student_id,)
+        ).fetchone()
+        
+        if raw:
+            data = json.loads(raw[0])
+            return SummaryState(**data)
+        return None 

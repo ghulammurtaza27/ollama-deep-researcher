@@ -1,5 +1,6 @@
 from langchain_ollama import ChatOllama
 from .configuration import Configuration
+from .state import SummaryState
 
 class RemediationEngine:
     def __init__(self, config: Configuration):

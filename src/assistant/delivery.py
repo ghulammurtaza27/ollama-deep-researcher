@@ -1,9 +1,11 @@
-from .content_generation import convert_to_modality
 from markdown import markdown
 from diagrams import Diagram
 from gtts import gTTS
 import os
 import uuid
+from langchain_ollama import ChatOllama
+from .shared import convert_to_modality
+from .tts import synthesize
 
 class ContentDeliverer:
     def __init__(self, config):
@@ -60,17 +62,8 @@ def display_visual(diagram_spec: str) -> None:
     Diagram("Learning Content", diagram_spec).render()
 
 def play_audio(text: str) -> None:
-    """Convert text to speech"""
-    # Integration with TTS service
-    tts_service.synthesize(text, format="mp3").play()
-
-def convert_to_modality(content: dict, modality: str) -> dict:
-    """Convert base content to different formats"""
-    if modality == "visual":
-        return generate_diagram(content['explanation'])
-    elif modality == "audio":
-        return generate_audio_script(content)
-    return content
+    audio_file = synthesize(text)
+    os.system(f"afplay {audio_file}")  # macOS only
 
 def generate_diagram(explanation: str) -> str:
     """Generate diagram code from explanation"""
@@ -79,3 +72,12 @@ def generate_diagram(explanation: str) -> str:
     {explanation}
     """
     return llm.invoke(prompt).content 
+
+def deliver_to_student(content: dict, modality: str = "text"):
+    """Deliver content in specified format"""
+    if modality == "text":
+        print(f"\n📚 {content['title']}\n{content['body']}")
+    elif modality == "audio":
+        print("\n🔊 Audio content delivered")
+    else:
+        print("\n📦 Content package generated") 

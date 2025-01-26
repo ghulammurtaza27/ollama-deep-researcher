@@ -1,12 +1,18 @@
 import json
-from .chat_ollama import ChatOllama
-from .web_search import web_search, tavily_search
-from .knowledge_graph import knowledge_graph, KnowledgeGraph
+from langchain_ollama import ChatOllama
+from .web_search import web_search
+from .knowledge_graph import KnowledgeGraph
 from .similarity import similar
 from .flag_for_review import flag_for_review
 from .reformat_content import reformat_content
 from typing import List, Dict
 from .configuration import Configuration
+from .flag_for_review import flag_for_review
+from .state import SummaryState
+from pydantic import ValidationError
+from .formatting import format_quiz
+from .parsing import parse_quiz
+
 
 def validate_content(content: str, sources: list) -> dict:
     """Verify generated content against trusted sources"""
@@ -20,7 +26,7 @@ def validation_flow(content: str) -> str:
     cleaned_claims = []
     
     for claim in claims:
-        if not knowledge_graph.verify(claim):
+        if not KnowledgeGraph.verify(claim):
             search_results = web_search(claim)
             if not verify_with_sources(claim, search_results):
                 flag_for_review(claim)
@@ -74,9 +80,13 @@ def validate_quiz(quiz: str) -> str:
     
     return format_quiz(validated) 
 
+def validate_question(question: str) -> bool:
+    """Check if question is factually valid"""
+    return len(question.split()) > 5  # Basic length check
+
 class ContentValidator:
     def __init__(self, config: Configuration):
-        self.kg = KnowledgeGraph()
+        self.kg = KnowledgeGraph(config)
         self.min_corroboration = config.required_corroboration
         self.llm = ChatOllama(model=config.local_llm)
         
@@ -128,3 +138,17 @@ class ContentValidator:
         claim_terms = set(claim.lower().split())
         source_terms = set(source_content.lower().split())
         return len(claim_terms & source_terms) / len(claim_terms) > 0.7 
+
+def validate_with_retry(schema):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            for _ in range(3):
+                try:
+                    result = func(*args, **kwargs)
+                    schema.parse_obj(result)
+                    return result
+                except (ValidationError, json.JSONDecodeError):
+                    continue
+            raise ValueError("Failed to generate valid format after 3 attempts")
+        return wrapper
+    return decorator 

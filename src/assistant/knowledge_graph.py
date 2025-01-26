@@ -1,10 +1,12 @@
 import json
 from sentence_transformers import SentenceTransformer
 import numpy as np
+from .configuration import Configuration
 
 class KnowledgeGraph:
-    def __init__(self, model_name='all-MiniLM-L6-v2'):
-        self.model = SentenceTransformer(model_name)
+    def __init__(self, config: Configuration):
+        self.config = config
+        self.model = SentenceTransformer('all-MiniLM-L6-v2')
         self.knowledge_base = self._load_base_knowledge()
         self.embeddings = self.model.encode(self.knowledge_base)
         
@@ -22,4 +24,8 @@ class KnowledgeGraph:
     def add_fact(self, fact: str):
         """Dynamically expand knowledge base"""
         self.knowledge_base.append(fact)
-        self.embeddings = np.vstack([self.embeddings, self.model.encode(fact)]) 
+        self.embeddings = np.vstack([self.embeddings, self.model.encode(fact)])
+
+class WolframAlphaKnowledgeGraph:
+    def __init__(self):
+        self.base_knowledge = [...]  # Add base facts 

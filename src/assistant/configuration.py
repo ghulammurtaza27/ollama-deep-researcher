@@ -14,9 +14,10 @@ class Configuration:
     difficulty_level: Literal['elementary', 'high_school', 'college'] = 'high_school'
     output_format: Literal['text', 'visual', 'audio'] = 'text'
     enable_quizzes: bool = True
-    local_llm: str = "llama3.2"
+    local_llm: str = "llama3"
     validation_enabled: bool = True
     required_corroboration: int = 2  # Minimum matching sources
+    tavily_api_key: str = field(default_factory=lambda: os.getenv("TAVILY_API_KEY", ""))
 
     @validate_call
     def __post_init__(self):
@@ -37,3 +38,7 @@ class Configuration:
             if f.init
         }
         return cls(**{k: v for k, v in values.items() if v})
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        return cls(**data)

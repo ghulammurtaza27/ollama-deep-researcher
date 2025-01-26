@@ -5,12 +5,17 @@ from typing_extensions import Literal
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_ollama import ChatOllama
-from langgraph.graph import START, END, StateGraph
+from langgraph.graph import START, END, StateGraph, MessageGraph
 
-from assistant.configuration import Configuration
-from assistant.utils import deduplicate_and_format_sources, tavily_search, format_sources
-from assistant.state import SummaryState, SummaryStateInput, SummaryStateOutput
-from assistant.prompts import query_writer_instructions, summarizer_instructions, reflection_instructions, quiz_generator_instructions, recommendation_instructions
+from .configuration import Configuration
+from .utils import (
+    deduplicate_and_format_sources,
+    tavily_search,
+    format_sources
+)
+from .state import SummaryState, SummaryStateInput, SummaryStateOutput, LearningState
+from .prompts import query_writer_instructions, summarizer_instructions, reflection_instructions, quiz_generator_instructions, recommendation_instructions
+from .nodes import generate_content, validate_content
 
 # Nodes   
 def generate_query(state: SummaryState, config: RunnableConfig):
@@ -184,6 +189,21 @@ def provide_feedback(score: float, misconceptions: list) -> str:
         return "Great job! You've mastered this concept."
     else:
         return f"Let's review these areas: {', '.join(misconceptions)}"
+
+def build_learning_graph():
+    """Main learning content generation workflow"""
+    workflow = StateGraph(LearningState)
+    
+    workflow.add_node("generate_content", generate_content)
+    workflow.add_node("validate_content", validate_content)
+    
+    workflow.set_entry_point("generate_content")
+    workflow.add_edge("generate_content", "validate_content")
+    workflow.add_edge("validate_content", END)
+    
+    return workflow.compile()
+
+
 
 # Add nodes and edges 
 builder = StateGraph(SummaryState, input=SummaryStateInput, output=SummaryStateOutput, config_schema=Configuration)

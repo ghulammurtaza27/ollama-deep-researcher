@@ -1,17 +1,16 @@
+from .state import SummaryState
+from .configuration import Configuration
+from .shared import convert_to_modality
+from .graph import build_learning_graph
+
 def generate_adaptive_content(state: SummaryState, config: Configuration) -> dict:
-    """Generate content tailored to student's needs"""
-    base_content = graph.invoke({
-        "current_subtopic": state.current_subtopic,
-        "difficulty_level": state.difficulty_level
-    }, config)
-    
-    if state.needs_remediation:
-        return generate_remediation_content(base_content, state)
-    
-    if state.preferred_modality != "text":
-        return convert_to_modality(base_content, state.preferred_modality)
-    
-    return base_content
+    """Generate content based on learning path"""
+    graph = build_learning_graph()
+    return graph.invoke({
+        "topic": state.learning_topic,
+        "knowledge_level": state.knowledge_level,
+        "config": config
+    })
 
 def generate_remediation_content(base: dict, state: SummaryState) -> dict:
     """Create alternative explanations for struggling students"""
