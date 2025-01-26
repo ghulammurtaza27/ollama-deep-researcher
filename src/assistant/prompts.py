@@ -57,3 +57,33 @@ Return your analysis as a JSON object:
     "knowledge_gap": "string",
     "follow_up_query": "string"
 }}"""
+
+explainer_instructions = """You are a patient teacher explaining {topic} to a {difficulty_level} student.
+Break down complex concepts using:
+1. Relatable analogies
+2. Visual metaphors
+3. Real-world examples
+4. Step-by-step reasoning
+
+Include interactive elements like:
+- "What if?" scenarios
+- "Try this" simple experiments
+- "Quick quiz" questions"""
+
+quiz_generator_instructions = """Generate 3-5 comprehension questions about:
+{topic}
+
+Formats:
+- Multiple choice (mark correct answer with *)
+- True/False
+- Fill-in-the-blank
+- Short answer
+
+Include answer explanations."""
+
+recommendation_instructions = """Suggest next learning steps based on:
+- Current topic: {current_topic}
+- Completed topics: {completed_topics}
+- Quiz performance: {quiz_scores}
+
+Recommend 3 options with difficulty ratings (1-5):"""

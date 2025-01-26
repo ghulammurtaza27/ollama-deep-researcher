@@ -1,16 +1,27 @@
 import os
 from dataclasses import dataclass, field, fields
-from typing import Any, Optional
+from typing import Any, Optional, Literal
 
 from langchain_core.runnables import RunnableConfig
 from typing_extensions import Annotated
 from dataclasses import dataclass
+from pydantic import validate_call
 
 @dataclass(kw_only=True)
 class Configuration:
-    """The configurable fields for the research assistant."""
-    max_web_research_loops: int = 3
+    """Educational configuration fields"""
+    max_topics: int = field(default=5)
+    difficulty_level: Literal['elementary', 'high_school', 'college'] = 'high_school'
+    output_format: Literal['text', 'visual', 'audio'] = 'text'
+    enable_quizzes: bool = True
     local_llm: str = "llama3.2"
+    validation_enabled: bool = True
+    required_corroboration: int = 2  # Minimum matching sources
+
+    @validate_call
+    def __post_init__(self):
+        if self.max_topics < 1 or self.max_topics > 10:
+            raise ValueError("max_topics must be between 1-10")
 
     @classmethod
     def from_runnable_config(
